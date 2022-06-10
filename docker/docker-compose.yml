@@ -1,0 +1,146 @@
+# start with: docker-compose --env-file ../laravel/.env up -d
+# create alias: alias sail="docker-compose --env-file ../laravel/.env run"
+
+version: "3.8"
+
+networks:
+  laravel:
+
+services:
+  # Application
+  app:
+    build:
+      context: ./dockerfiles
+      dockerfile: app.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+    container_name: app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ../laravel:/var/www/html
+    networks:
+      - laravel
+
+  # NGINX Server
+  nginx:
+    build:
+      context: ./dockerfiles
+      dockerfile: nginx.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+    container_name: nginx
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./config/nginx:/etc/nginx/conf.d
+      - ../laravel:/var/www/html
+    ports:
+      - 8000:80
+    depends_on:
+      - mysql
+    networks:
+      - laravel
+
+  # Database Server
+  mysql:
+    image: mysql:5.7.38
+    container_name: mysql
+    restart: unless-stopped
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    environment:
+      # automatically creates database and user
+      - MYSQL_ALLOW_EMPTY_PASSWORD = 1
+      - MYSQL_DATABASE=${APP_NAME}
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+    networks:
+      - laravel
+
+  # Database GUI Server
+  phpmyadmin:
+    image: phpmyadmin:5.2-apache
+    container_name: phpmyadmin
+    restart: unless-stopped
+    ports:
+      - 8001:80
+    depends_on:
+      - mysql
+    environment:
+      # automatically logs in given user
+      - PMA_HOST=mysql
+      - PMA_PORT=${DB_PORT}
+      - PMA_USER=${DB_USERNAME}
+      - PMA_PASSWORD=${DB_PASSWORD}
+    networks:
+      - laravel
+
+  # Mailhog Server
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog
+    ports:
+      - 8025:8025 # HTTP server port
+      - 1025:1025 # SMTP server port
+    networks:
+      - laravel
+
+  # Artisan service
+  # Command: docker-compose --env-file ../laravel/.env run artisan --version
+  artisan:
+    build:
+      context: ./dockerfiles
+      dockerfile: artisan.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+    container_name: artisan
+    volumes:
+      - ../laravel:/var/www/html:delegated
+    depends_on:
+      - mysql
+    working_dir: /var/www
+    entrypoint: ["php", "/var/www/html/artisan"]
+    networks:
+      - laravel
+
+  # Node.js service
+  # Command: docker-compose --env-file ../laravel/.env run npm -v
+  npm:
+    image: node:latest
+    container_name: npm
+    volumes:
+      - ../laravel:/var/www/html
+    ports:
+      - 3000:3000
+      - 3001:3001
+    working_dir: /var/www/html
+    entrypoint: ["npm"]
+    networks:
+      - laravel
+
+  # Composer service
+  # Command: docker-compose --env-file ../laravel/.env run composer --version
+  composer:
+    build:
+      context: ./dockerfiles
+      dockerfile: composer.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+    container_name: composer
+    volumes:
+      - ../laravel:/var/www/html
+    working_dir: /var/www/html
+    depends_on:
+      - app
+    user: laravel
+    entrypoint: ["composer", "--ignore-platform-reqs"]
+    networks:
+      - laravel
