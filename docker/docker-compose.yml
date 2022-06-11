@@ -44,6 +44,23 @@ services:
     networks:
       - laravel
 
+  # Apache Server
+  apache:
+    container_name: apache
+    build:
+      context: ./dockerfiles
+      dockerfile: apache.dockerfile
+    environment:
+      - APACHE_RUN_USER=#1000
+      - APACHE_RUN_GROUP=#1000
+    ports:
+      - 8002:80
+    volumes:
+      - ../laravel:/var/www/html
+      - ./config/apache:/etc/apache2/conf
+    networks:
+      - laravel
+
   # Database Server
   mysql:
     image: mysql:5.7.38
@@ -54,10 +71,10 @@ services:
     environment:
       # automatically creates database and user
       - MYSQL_ALLOW_EMPTY_PASSWORD = 1
-      - MYSQL_DATABASE=${APP_NAME}
+      - MYSQL_DATABASE=${DB_DATABASE}
       - MYSQL_USER=${DB_USERNAME}
       - MYSQL_PASSWORD=${DB_PASSWORD}
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=root_password
     volumes:
       - ./volumes/mysql:/var/lib/mysql
     networks:
@@ -76,71 +93,71 @@ services:
       # automatically logs in given user
       - PMA_HOST=mysql
       - PMA_PORT=${DB_PORT}
-      - PMA_USER=${DB_USERNAME}
-      - PMA_PASSWORD=${DB_PASSWORD}
+      - PMA_USER=root
+      - PMA_PASSWORD=root_password
     networks:
       - laravel
 
   # Mailhog Server
-  mailhog:
-    image: mailhog/mailhog:latest
-    container_name: mailhog
-    ports:
-      - 8025:8025 # HTTP server port
-      - 1025:1025 # SMTP server port
-    networks:
-      - laravel
+  # mailhog:
+  #   image: mailhog/mailhog:latest
+  #   container_name: mailhog
+  #   ports:
+  #     - 8025:8025 # HTTP server port
+  #     - 1025:1025 # SMTP server port
+  #   networks:
+  #     - laravel
 
   # Artisan service
   # Command: docker-compose --env-file ../laravel/.env run artisan --version
-  artisan:
-    build:
-      context: ./dockerfiles
-      dockerfile: artisan.dockerfile
-      args:
-        - UID=${UID:-1000}
-        - GID=${GID:-1000}
-    container_name: artisan
-    volumes:
-      - ../laravel:/var/www/html:delegated
-    depends_on:
-      - mysql
-    working_dir: /var/www
-    entrypoint: ["php", "/var/www/html/artisan"]
-    networks:
-      - laravel
+  # artisan:
+  #   build:
+  #     context: ./dockerfiles
+  #     dockerfile: artisan.dockerfile
+  #     args:
+  #       - UID=${UID:-1000}
+  #       - GID=${GID:-1000}
+  #   container_name: artisan
+  #   volumes:
+  #     - ../laravel:/var/www/html:delegated
+  #   depends_on:
+  #     - mysql
+  #   working_dir: /var/www
+  #   entrypoint: ["php", "/var/www/html/artisan"]
+  #   networks:
+  #     - laravel
 
   # Node.js service
   # Command: docker-compose --env-file ../laravel/.env run npm -v
-  npm:
-    image: node:latest
-    container_name: npm
-    volumes:
-      - ../laravel:/var/www/html
-    ports:
-      - 3000:3000
-      - 3001:3001
-    working_dir: /var/www/html
-    entrypoint: ["npm"]
-    networks:
-      - laravel
+  # npm:
+  #   image: node:latest
+  #   container_name: npm
+  #   volumes:
+  #     - ../laravel:/var/www/html
+  #   ports:
+  #     - 3000:3000
+  #     - 3001:3001
+  #   working_dir: /var/www/html
+  #   entrypoint: ["npm"]
+  #   networks:
+  #     - laravel
 
   # Composer service
   # Command: docker-compose --env-file ../laravel/.env run composer --version
-  composer:
-    build:
-      context: ./dockerfiles
-      dockerfile: composer.dockerfile
-      args:
-        - UID=${UID:-1000}
-        - GID=${GID:-1000}
-    container_name: composer
-    volumes:
-      - ../laravel:/var/www/html
-    working_dir: /var/www/html
-    depends_on:
-      - app
-    user: laravel
-    entrypoint: ["composer", "--ignore-platform-reqs"]
-    networks:
-      - laravel
+  # composer:
+  #   build:
+  #     context: ./dockerfiles
+  #     dockerfile: composer.dockerfile
+  #     args:
+  #       - UID=${UID:-1000}
+  #       - GID=${GID:-1000}
+  #   container_name: composer
+  #   volumes:
+  #     - ../laravel:/var/www/html
+  #   working_dir: /var/www/html
+  #   depends_on:
+  #     - app
+  #   user: laravel
+  #   entrypoint: ["composer", "--ignore-platform-reqs"]
+  #   networks:
+  #     - laravel
