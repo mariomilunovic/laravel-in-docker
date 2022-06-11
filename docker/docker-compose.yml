@@ -24,25 +24,25 @@ services:
       - laravel
 
   # NGINX Server
-  nginx:
-    build:
-      context: ./dockerfiles
-      dockerfile: nginx.dockerfile
-      args:
-        - UID=${UID:-1000}
-        - GID=${GID:-1000}
-    container_name: nginx
-    restart: unless-stopped
-    working_dir: /var/www/html
-    volumes:
-      - ./config/nginx:/etc/nginx/conf.d
-      - ../laravel:/var/www/html
-    ports:
-      - 8000:80
-    depends_on:
-      - mysql
-    networks:
-      - laravel
+  # nginx:
+  #   build:
+  #     context: ./dockerfiles
+  #     dockerfile: nginx.dockerfile
+  #     args:
+  #       - UID=${UID:-1000}
+  #       - GID=${GID:-1000}
+  #   container_name: nginx
+  #   restart: unless-stopped
+  #   working_dir: /var/www/html
+  #   volumes:
+  #     - ./config/nginx:/etc/nginx/conf.d
+  #     - ../laravel:/var/www/html
+  #   ports:
+  #     - 8000:80
+  #   depends_on:
+  #     - mysql
+  #   networks:
+  #     - laravel
 
   # Apache Server
   apache:
@@ -57,7 +57,7 @@ services:
       - 8002:80
     volumes:
       - ../laravel:/var/www/html
-      - ./config/apache:/etc/apache2/conf
+      # - ./config/apache:/etc/apache2/conf
     networks:
       - laravel
 

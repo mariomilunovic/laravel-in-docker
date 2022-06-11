@@ -2,18 +2,18 @@ FROM php:8.1-apache
 
 
 # 1. Install development packages and clean up apt cache.
-RUN apt-get update && apt-get install -y \ 
-    libbz2-dev \
-    libfreetype6-dev \
-    libicu-dev \
-    libjpeg-dev \
-    libmcrypt-dev \
-    libpng-dev \
-    libreadline-dev \
-    sudo \
-    unzip \
-    zip \
- && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install -y \ 
+#     libbz2-dev \
+#     libfreetype6-dev \
+#     libicu-dev \
+#     libjpeg-dev \
+#     libmcrypt-dev \
+#     libpng-dev \
+#     libreadline-dev \
+#     sudo \
+#     unzip \
+#     zip \
+#  && rm -rf /var/lib/apt/lists/*
 
 # 2. Apache configs + document root.
 RUN echo "ServerName laravel-app.local" >> /etc/apache2/apache2.conf
